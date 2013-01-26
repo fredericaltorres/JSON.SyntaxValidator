@@ -52,7 +52,7 @@ C# Sample:
     }
 
 
-## Relax Mode (zizi)
+## Relax Mode
 
 To support
 - /* */ Comment
