@@ -52,7 +52,7 @@ C# Sample:
     }
 
 
-# Relax Mode (zizi)
+## Relax Mode (zizi)
 
 To support
 - /* */ Comment
@@ -60,5 +60,5 @@ To support
 - Trailing comma
 The relax mode can be activated in programmatically
 
-
+Sample:
     var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true);
