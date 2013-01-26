@@ -1,0 +1,62 @@
+﻿JSON.SyntaxValidator v 1.0
+==========================
+
+# What is it?
+
+JSON.SyntaxValidator is a C# library to validate JSON.
+
+## Why this library? 
+Because all .NET JSON frameworks I tested (in 01/2013) do not follow strictly the 
+JSON standard and this is what you I need to work with JSON.parse() in JavaScript.
+Once the JSON is validated, you can also access the data programmatically.
+JSON.SyntaxValidator is a read-only library.
+
+By default the library strictly follows the JSON standard
+- All id must be string
+- No trailing comma
+- No // comment
+
+***The library supports by default /* */, though it is not part of the standard.***
+
+
+##Samples:
+
+JSON Sample:
+
+    {
+	    "LastName" : "Torres"			   ,
+	    "FirstName": "Frederic"			   ,
+	    "BirthDate": "1964-12-11T00:00:00Z",
+	    "Age"	   : 48					   ,
+	    "Male"	   : true				   ,
+	    "Other"	   : null
+    }
+
+C# Sample:
+
+    [TestMethod]
+    public void ParseSimpleJsonFile()
+    {
+        var json = DS.Resources.GetTextResource("Me.json", Assembly.GetExecutingAssembly());
+        var o    = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json);
+
+        Assert.AreEqual("Torres", o["LastName"]);
+        Assert.AreEqual("Frederic", o["FirstName"]);
+        Assert.AreEqual(new DateTime(1964,12,11), o["BirthDate"]);
+        Assert.AreEqual(48.0, o["Age"]);
+        Assert.AreEqual(true, o["Male"]);
+        Assert.AreEqual(null, o["Other"]);
+    }
+
+
+# Relax Mode
+
+To support
+- id must be string
+- Trailing comma
+The relax mode can be activated in 2 ways
+(1) Programmatically
+    var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, relaxMode:true);
+(2) By the JSON itself, the first comment must contains the "use relax"
+    Sample:
+        /* "use relax" */
