@@ -3,7 +3,7 @@
 
 # What is it?
 
-JSON.SyntaxValidator is a C# library to validate JSON.
+JSON.SyntaxValidator is a C# library to validate JSON strictly or in relax mode.
 
 ## Why this library? 
 Because all .NET JSON frameworks I tested (in 01/2013) do not follow strictly the 
@@ -12,14 +12,14 @@ Once the JSON is validated, you can also access the data programmatically.
 JSON.SyntaxValidator is a read-only library.
 
 By default the library strictly follows the [JSON](http://www.json.org) standard
-- All id must be string
+- Property name must be string
 - String use double quote only
 - No trailing comma
 - No // comment
 - No /* */ Comment
 
-The library is used in the Visual Studio extension [TextHighlighterExtensionSetup](http://visualstudiogallery.msdn.microsoft.com/6706b602-6f10-4fd1-8e14-75840f855569)
-to JSON on the fly syntax validation.
+The library is used in the Visual Studio extension [TextHighlighterExtension](http://visualstudiogallery.msdn.microsoft.com/6706b602-6f10-4fd1-8e14-75840f855569)
+to validate JSON on the fly syntax validation.
 
 ##Samples:
 
@@ -56,7 +56,7 @@ C# Sample:
 
 To support
 - /* */ Comment
-- id as non string
+- property name defined as ID or string
 - Trailing comma
 The relax mode can be activated in programmatically
 
