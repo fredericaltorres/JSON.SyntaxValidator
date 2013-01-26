@@ -7,7 +7,7 @@ JSON.SyntaxValidator is a C# library to validate JSON.
 
 ## Why this library? 
 Because all .NET JSON frameworks I tested (in 01/2013) do not follow strictly the 
-JSON standard and this is what you I need to work with JSON.parse() in JavaScript.
+JSON standard and this is what you I needed to work with JSON.parse() in JavaScript.
 Once the JSON is validated, you can also access the data programmatically.
 JSON.SyntaxValidator is a read-only library.
 
@@ -16,7 +16,7 @@ By default the library strictly follows the JSON standard
 - No trailing comma
 - No // comment
 
-***The library supports by default /* */, though it is not part of the standard.***
+> The library supports by default /* */, though it is not part of the standard.
 
 The library is used in the Visual Studio extension [TextHighlighterExtensionSetup](http://visualstudiogallery.msdn.microsoft.com/6706b602-6f10-4fd1-8e14-75840f855569)
 to JSON on the fly syntax validation.
