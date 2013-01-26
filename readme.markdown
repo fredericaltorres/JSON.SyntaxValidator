@@ -52,12 +52,13 @@ C# Sample:
     }
 
 
-# Relax Mode
+# Relax Mode (zizi)
 
 To support
 - /* */ Comment
 - id as non string
 - Trailing comma
 The relax mode can be activated in programmatically
+
 
     var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true);
