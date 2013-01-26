@@ -12,7 +12,24 @@ namespace JsonParserUnitTests
 {
     [TestClass]
     public class JsonParserRelaxModeUnitTests
-    {         
+    {
+        [TestMethod]
+        public void SlashBackSlash()
+        {
+            string json = @"{ ""slash1"":""/"",  ""slash2"":""\/"", ""backslash"":""\\""}";
+            var r = new JSON.SyntaxValidator.Compiler().Validate(json) as Hashtable;
+            Assert.AreEqual("/", r["slash1"]);
+            Assert.AreEqual("/", r["slash2"]);
+            Assert.AreEqual("\\", r["backslash"]);
+        }
+        [TestMethod]
+        public void StringWithUniCode()
+        {
+            string json = @"{ ""v1"":""\u0041"", ""v2"":""\\\u0041""}";
+            var r = new JSON.SyntaxValidator.Compiler().Validate(json) as Hashtable;
+            Assert.AreEqual("A", r["v1"]);
+            Assert.AreEqual("\\A", r["v2"]);
+        }
         [TestMethod]
         public void ParseJsonWithNoQuoteForId()
         {
