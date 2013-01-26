@@ -18,6 +18,8 @@ By default the library strictly follows the JSON standard
 
 ***The library supports by default /* */, though it is not part of the standard.***
 
+The library is used in the Visual Studio extension [TextHighlighterExtensionSetup](http://visualstudiogallery.msdn.microsoft.com/6706b602-6f10-4fd1-8e14-75840f855569)
+to JSON on the fly syntax validation.
 
 ##Samples:
 
@@ -38,6 +40,7 @@ C# Sample:
     public void ParseSimpleJsonFile()
     {
         var json = DS.Resources.GetTextResource("Me.json", Assembly.GetExecutingAssembly());
+
         var o    = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json);
 
         Assert.AreEqual("Torres", o["LastName"]);
