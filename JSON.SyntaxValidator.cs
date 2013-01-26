@@ -48,6 +48,7 @@ namespace JSON.SyntaxValidator
         private int     _index;
         private bool    _supportIDWithNoQuote;
         private bool    _supportTrailingComa;
+        private bool    _supportStartComment;
 
         private const int BUILDER_CAPACITY = 2000;
 
@@ -56,9 +57,10 @@ namespace JSON.SyntaxValidator
         /// </summary>
         /// <param name="json">A JSON string.</param>
         /// <returns>An ArrayList, a Hashtable, a double, a string, null, true, or false</returns>
-        public object Validate(string json, bool relaxMode = false, CommentInfos commentInfos = null)
+        public object Validate(string json, bool supportStartComment = false, bool relaxMode = false, CommentInfos commentInfos = null)
         {
             bool success = true;
+            this._supportStartComment = supportStartComment;
 
             if (commentInfos == null) // Optimization for the TextHighlighter extension
             {                         // So we do not have parse the comment twice if possible
@@ -85,7 +87,7 @@ namespace JSON.SyntaxValidator
                 this._charArray   = json.ToCharArray();
                 this._index       = 0;
                 object value      = ParseValue(ref success);
-                var tokenAHead    = LookAhead(this._charArray, this._index);
+                var tokenAHead    = LookAhead(this._charArray, this._index, this._supportStartComment);
                 if (tokenAHead != TOKENS.NONE)
                 {
                     this.ThrowError(SYNTAX_ERROR_014.format(TOKEN_STRING[tokenAHead]), this._index);
@@ -145,20 +147,20 @@ namespace JSON.SyntaxValidator
             TOKENS token;
 
             // {
-            NextToken(_charArray, ref _index);
+            NextToken(_charArray, ref _index, this._supportStartComment);
 
-            var tokenAHead = LookAhead(_charArray, _index);
+            var tokenAHead = LookAhead(_charArray, _index, this._supportStartComment);
             // Check for [{]
             // Check for {,
             if (tokenAHead.In(TOKENS.SQUARED_CLOSE, TOKENS.COMA, TOKENS.COLON))
             {
-                NextToken(_charArray, ref _index);
+                NextToken(_charArray, ref _index, this._supportStartComment);
                 this.ThrowError(SYNTAX_ERROR_014.format(TOKEN_STRING[tokenAHead]),  _index);
             }
 
             while (!done)
             {
-                token = LookAhead(_charArray, _index);
+                token = LookAhead(_charArray, _index, this._supportStartComment);
                  
                 if (token == TOKENS.NONE)
                 {
@@ -166,8 +168,8 @@ namespace JSON.SyntaxValidator
                 }
                 else if (token == TOKENS.COMA)
                 {
-                    NextToken(_charArray, ref _index);
-                    if (LookAhead(_charArray, _index).In(TOKENS.CURLY_CLOSE))
+                    NextToken(_charArray, ref _index, this._supportStartComment);
+                    if (LookAhead(_charArray, _index, this._supportStartComment).In(TOKENS.CURLY_CLOSE))
                     {
                         if (!this._supportTrailingComa)
                             this.ThrowError(SYNTAX_ERROR_001, this._index);
@@ -175,7 +177,7 @@ namespace JSON.SyntaxValidator
                 }
                 else if (token == TOKENS.CURLY_CLOSE)
                 {
-                    NextToken(_charArray, ref _index);
+                    NextToken(_charArray, ref _index, this._supportStartComment);
                     return table;
                 }
                 else
@@ -185,11 +187,11 @@ namespace JSON.SyntaxValidator
 
                     if (token == TOKENS.ID && this._supportIDWithNoQuote)
                     {
-                        name = ParseID(this._charArray, ref _index, ref success).ToString();
+                        name = ParseID(this._charArray, ref _index, ref success, this._supportStartComment).ToString();
                     }
                     else if (token == TOKENS.STRING)
                     {
-                        var s = ParseString(ref _index, ref success);
+                        var s = ParseString(ref _index, ref success, this._supportStartComment);
                         if (s == null)
                         {                
                             this.ThrowError(SYNTAX_ERROR_017, this._index);
@@ -206,12 +208,12 @@ namespace JSON.SyntaxValidator
 
                     if (!success)
                     {
-                        var tmpTok = NextToken(_charArray, ref _index);
+                        var tmpTok = NextToken(_charArray, ref _index, this._supportStartComment);
                         this.ThrowError(SYNTAX_ERROR_007, this._index);
                     }
 
                     // :
-                    token = NextToken(_charArray, ref _index);
+                    token = NextToken(_charArray, ref _index, this._supportStartComment);
                     if (token != TOKENS.COLON)
                     {
                         this.ThrowError(SYNTAX_ERROR_004, this._index);
@@ -254,8 +256,8 @@ namespace JSON.SyntaxValidator
         {
             var l = new List<TOKENS>();
             int index2 = _index;
-            l.Add(NextToken(this._charArray, ref _index));
-            l.Add(NextToken(_charArray, ref _index));
+            l.Add(NextToken(this._charArray, ref _index, this._supportStartComment));
+            l.Add(NextToken(_charArray, ref _index, this._supportStartComment));
             _index = index2;
             return l;
         }
@@ -265,23 +267,23 @@ namespace JSON.SyntaxValidator
             var array = new ArrayList();
            
             // [
-            NextToken(_charArray, ref _index);
+            NextToken(_charArray, ref _index, this._supportStartComment);
 
             bool done = false;
 
-            var tokenAHead = LookAhead(_charArray, _index);
+            var tokenAHead = LookAhead(_charArray, _index, this._supportStartComment);
 
             // Check for [,
             // Check for [}
             if (tokenAHead.In(TOKENS.COMA, TOKENS.CURLY_CLOSE))
             {
-                NextToken(_charArray, ref _index);
+                NextToken(_charArray, ref _index, this._supportStartComment);
                 this.ThrowError(SYNTAX_ERROR_014.format(TOKEN_STRING[tokenAHead]), this._index);
             }
 
             while (!done)
             {
-                var token = LookAhead(_charArray, _index);
+                var token = LookAhead(_charArray, _index, this._supportStartComment);
   
 
                 if (token == TOKENS.NONE)
@@ -290,8 +292,8 @@ namespace JSON.SyntaxValidator
                 }
                 else if (token == TOKENS.COMA)
                 {
-                    NextToken(_charArray, ref _index);
-                    if (LookAhead(_charArray, _index).In(TOKENS.CURLY_CLOSE))
+                    NextToken(_charArray, ref _index, this._supportStartComment);
+                    if (LookAhead(_charArray, _index, this._supportStartComment).In(TOKENS.CURLY_CLOSE))
                     {
                         if (!this._supportTrailingComa)
                             this.ThrowError(SYNTAX_ERROR_001, this._index);
@@ -299,7 +301,7 @@ namespace JSON.SyntaxValidator
                 }
                 else if (token == TOKENS.SQUARED_CLOSE)
                 {
-                    NextToken(_charArray, ref _index);
+                    NextToken(_charArray, ref _index, this._supportStartComment);
                     break;
                 }
                 else
@@ -311,7 +313,7 @@ namespace JSON.SyntaxValidator
                     }
                     array.Add(value);
 
-                    var nextToken = LookAhead(_charArray, _index);
+                    var nextToken = LookAhead(_charArray, _index, this._supportStartComment);
                     if (nextToken != TOKENS.SQUARED_CLOSE && nextToken != TOKENS.COMA)
                     {
                         this.ThrowError(SYNTAX_ERROR_009, this._index);
@@ -335,25 +337,25 @@ namespace JSON.SyntaxValidator
 
         private object ParseValue(ref bool success)
         {
-            var token = LookAhead(_charArray, _index);
+            var token = LookAhead(_charArray, _index, this._supportStartComment);
             switch (token)
             {
                 case TOKENS.STRING:
-                    return ParseString(ref _index, ref success);
+                    return ParseString(ref _index, ref success, this._supportStartComment);
                 case TOKENS.NUMBER:
-                    return ParseNumber(this._charArray, ref _index, ref success);
+                    return ParseNumber(this._charArray, ref _index, ref success, this._supportStartComment);
                 case TOKENS.CURLY_OPEN:
                     return ParseObject(ref success);
                 case TOKENS.SQUARED_OPEN:
                     return ParseArray(ref success);
                 case TOKENS.TRUE:
-                    NextToken(this._charArray, ref _index);
+                    NextToken(this._charArray, ref _index, this._supportStartComment);
                     return true;
                 case TOKENS.FALSE:
-                    NextToken(this._charArray, ref _index);
+                    NextToken(this._charArray, ref _index, this._supportStartComment);
                     return false;
                 case TOKENS.NULL:
-                    NextToken(this._charArray, ref _index);
+                    NextToken(this._charArray, ref _index, this._supportStartComment);
                     return null;
                 case TOKENS.NONE:
                     break;
@@ -362,13 +364,13 @@ namespace JSON.SyntaxValidator
             return null; // will never be executed
         }
 
-        private object ParseString(ref int index, ref bool success)
+        private object ParseString(ref int index, ref bool success, bool supportStartComment)
         {
             var indexSaved = index;
             StringBuilder s = new StringBuilder(BUILDER_CAPACITY);
             char c;
 
-            EatWhitespace(_charArray, ref index);
+            EatWhitespace(_charArray, ref index, supportStartComment);
 
             c = _charArray[index++];
 

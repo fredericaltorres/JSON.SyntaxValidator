@@ -99,10 +99,10 @@ namespace JSON.SyntaxValidator
             return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
                    (c == '_') || (c == '$');
         }
-       
-        protected static string ParseID(char[] json, ref int index, ref bool success)
+
+        protected static string ParseID(char[] json, ref int index, ref bool success, bool supportStartComment)
         {
-            EatWhitespace(json, ref index);
+            EatWhitespace(json, ref index, supportStartComment);
             var b = new StringBuilder(100);
 
             if (!IsIdForFirstChar(json[index]))
@@ -119,9 +119,9 @@ namespace JSON.SyntaxValidator
             return b.ToString();
         }
 
-        protected static double ParseNumber(char[] json, ref int index, ref bool success)
+        protected static double ParseNumber(char[] json, ref int index, ref bool success, bool supportStartComment)
         {
-            EatWhitespace(json, ref index);
+            EatWhitespace(json, ref index, supportStartComment);
 
             int lastIndex = GetLastIndexOfNumber(json, index);
             int charLength = (lastIndex - index) + 1;
@@ -147,13 +147,14 @@ namespace JSON.SyntaxValidator
             return lastIndex - 1;
         }
 
-        protected static void EatWhitespace(char[] json, ref int index)
+        protected static void EatWhitespace(char[] json, ref int index, bool supportStartComment)
         {
             for (; index < json.Length; index++)
             {
                 if (" \t\n\r".IndexOf(json[index]) == -1)
                 {
-                    EatComment(json, ref index);
+                    if(supportStartComment)
+                        EatComment(json, ref index);
                     break;
                 }
             }
@@ -170,27 +171,27 @@ namespace JSON.SyntaxValidator
                         index++;
                     }
                     index += 2;
-                    EatWhitespace(json, ref index);
+                    EatWhitespace(json, ref index, true);
                 }
             }
         }
 
-        protected static bool LookAheadForId(char[] json, int index)
+        protected static bool LookAheadForId(char[] json, int index, bool _supportStartComments)
         {
             int saveIndex = index;
             bool success = false;
-            return ParseID(json, ref saveIndex, ref success)!=null;
+            return ParseID(json, ref saveIndex, ref success, _supportStartComments) != null;
         }
 
-        protected static TOKENS LookAhead(char[] json, int index)
+        protected static TOKENS LookAhead(char[] json, int index, bool supportStartComment)
         {
             int saveIndex = index;
-            return NextToken(json, ref saveIndex);
+            return NextToken(json, ref saveIndex, supportStartComment);
         }
 
-        protected static TOKENS NextToken(char[] json, ref int index)
+        protected static TOKENS NextToken(char[] json, ref int index, bool supportStartComment)
         {
-            EatWhitespace(json, ref index);
+            EatWhitespace(json, ref index, supportStartComment);
 
             if (index == json.Length)
             {
@@ -261,7 +262,7 @@ namespace JSON.SyntaxValidator
                     return TOKENS.NULL;
                 }
             }
-            if (LookAheadForId(json, index))
+            if (LookAheadForId(json, index, supportStartComment))
             {
                 return TOKENS.ID;
             }

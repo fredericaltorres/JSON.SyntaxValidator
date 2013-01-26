@@ -40,12 +40,12 @@ namespace JsonParserUnitTests
             Assert.AreEqual(true, o["Male"]);
             Assert.AreEqual(null, o["Other"]);
         }
-        private void HandleException(string json, string expectedErrorMessage, int expectedLine, int expectedColumn)
+        private void HandleException(string json, string expectedErrorMessage, int expectedLine, int expectedColumn, bool supportStarComments = false)
         {
             var exceptionCaugth = false;
             try
             {
-                var r = new JSON.SyntaxValidator.Compiler().Validate(json) as Hashtable;
+                var r = new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment: supportStarComments ) as Hashtable;
             }
             catch (ParserException ex)
             {
@@ -66,7 +66,7 @@ namespace JsonParserUnitTests
         public void ComaJustAfterComment()
         {
             string json = @"/* ok */, {}";
-            HandleException(json, JSON.SyntaxValidator.Compiler.SYNTAX_ERROR_014.format(","), 1, 0);   
+            HandleException(json, JSON.SyntaxValidator.Compiler.SYNTAX_ERROR_014.format(","), 1, 0, true);   
         }
         [TestMethod]
         public void ParseIdWithNoDoubleQuote()
@@ -344,7 +344,7 @@ namespace JsonParserUnitTests
         public void ParseSimpleJsonFileWithComments()
         {
             string json = DS.Resources.GetTextResource("MeWithComments.json", Assembly.GetExecutingAssembly());
-            var o = (Hashtable)new JSON.SyntaxValidator.Compiler().Validate(json);
+            var o = (Hashtable)new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true);
 
             Assert.AreEqual("Torres", o["LastName"]);
             Assert.AreEqual("Frederic", o["FirstName"]);

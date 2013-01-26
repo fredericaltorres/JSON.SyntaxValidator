@@ -17,7 +17,7 @@ namespace JsonParserUnitTests
         public void ParseJsonWithNoQuoteForId()
         {
             string json = @"/* ""use relax"" */{ T:true, ""F"":false }";
-            var r = new JSON.SyntaxValidator.Compiler().Validate(json) as Hashtable;
+            var r = new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true) as Hashtable;
             Assert.AreEqual(true, r["T"]);
             Assert.AreEqual(false, r["F"]);
         }
@@ -26,7 +26,7 @@ namespace JsonParserUnitTests
         {
             string json = DS.Resources.GetTextResource("MeNoQuote.json", Assembly.GetExecutingAssembly());
 
-            var o = (Hashtable)new JSON.SyntaxValidator.Compiler().Validate(json);
+            var o = (Hashtable)new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true);
 
             Assert.AreEqual("Torres", o["LastName"]);
             Assert.AreEqual("Frederic", o["FirstName"]);

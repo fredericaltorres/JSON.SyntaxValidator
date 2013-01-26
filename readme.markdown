@@ -11,12 +11,12 @@ JSON standard and this is what you I needed to work with JSON.parse() in JavaScr
 Once the JSON is validated, you can also access the data programmatically.
 JSON.SyntaxValidator is a read-only library.
 
-By default the library strictly follows the JSON standard
+By default the library strictly follows the [JSON](http://www.json.org) standard
 - All id must be string
+- String use double quote only
 - No trailing comma
 - No // comment
-
-> The library supports by default /* */, though it is not part of the standard.
+- No /* */ Comment
 
 The library is used in the Visual Studio extension [TextHighlighterExtensionSetup](http://visualstudiogallery.msdn.microsoft.com/6706b602-6f10-4fd1-8e14-75840f855569)
 to JSON on the fly syntax validation.
@@ -55,11 +55,9 @@ C# Sample:
 # Relax Mode
 
 To support
-- id must be string
+- /* */ Comment
+- id as non string
 - Trailing comma
 The relax mode can be activated in 2 ways
 (1) Programmatically
-    var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, relaxMode:true);
-(2) By the JSON itself, the first comment must contains the "use relax"
-    Sample:
-        /* "use relax" */
+    var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true);
