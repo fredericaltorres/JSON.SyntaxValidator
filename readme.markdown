@@ -58,6 +58,6 @@ To support
 - /* */ Comment
 - id as non string
 - Trailing comma
-The relax mode can be activated in 2 ways
-(1) Programmatically
+The relax mode can be activated in programmatically
+
     var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true);
