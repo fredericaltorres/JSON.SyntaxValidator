@@ -18,7 +18,7 @@ namespace JsonParserUnitTests
         {   
             //                0123456789
             string source = @" /* ok */ ";
-            var comments = new JsonParser.CommentParser().Parse(source);
+            var comments = new CommentParser().Parse(source);
             Assert.AreEqual(1, comments.Count);
             Assert.AreEqual(1, comments[0].Start);
             Assert.AreEqual(8, comments[0].End);
@@ -30,7 +30,7 @@ namespace JsonParserUnitTests
         {
             //                01234567890123456789
             string source = @" /*1*/ /*2*/ /*3*/";
-            var comments = new JsonParser.CommentParser().Parse(source);
+            var comments = new CommentParser().Parse(source);
             Assert.AreEqual(3, comments.Count);
 
             Assert.AreEqual(1, comments[0].Start);
@@ -54,7 +54,7 @@ namespace JsonParserUnitTests
         {
             //                012345678901234567890123456789
             string source = @" /* 1 */ /* 2 */ /* 3 */";
-            var comments = new JsonParser.CommentParser().Parse(source);
+            var comments = new CommentParser().Parse(source);
             Assert.AreEqual(3, comments.Count);
 
             Assert.AreEqual(1, comments[0].Start);
@@ -80,7 +80,7 @@ namespace JsonParserUnitTests
         {
             string json = DS.Resources.GetTextResource("JsonWithALotOfComments.json", Assembly.GetExecutingAssembly());
           
-            var comments = new JsonParser.CommentParser().Parse(json);
+            var comments = new CommentParser().Parse(json);
             Assert.AreEqual(20, comments.Count);
             Assert.AreEqual(" Template defining the caption of the object ", comments[0].Text);
             Assert.AreEqual(" The property to use as the identifier       ", comments[1].Text);
@@ -101,7 +101,7 @@ namespace JsonParserUnitTests
         {
             //                012345678901234567890123456789
             string source = @" /* 1 */ /* 2 */ /* 3 */ ";
-            var comments = new JsonParser.CommentParser().Parse(source);
+            var comments = new CommentParser().Parse(source);
             Assert.AreEqual(3, comments.Count);
             Assert.IsFalse(comments.IsPositionInComment(0));
             Assert.IsFalse(comments.IsPositionInComment(8));

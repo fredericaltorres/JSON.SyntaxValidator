@@ -63,3 +63,8 @@ The relax mode can be activated in programmatically
 Sample:
 
     var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true);
+
+
+## License
+
+The software is subject to the MIT license: you are free to use it in any way you like, but it must keep its license.

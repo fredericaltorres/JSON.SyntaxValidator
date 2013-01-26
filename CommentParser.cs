@@ -1,13 +1,20 @@
-﻿using System;
+﻿/*
+ JSON Syntax Validator
+ (C) Torres Frederic 2013
+
+ Based on code from: How do I write my own parser? (for JSON) By Patrick van Bergen http://techblog.procurios.nl/k/618/news/view/14605/14863/How-do-I-write-my-own-parser-for-JSON.html
+ My library heavily change Patrick van Bergen's code. 
+ 
+ The library is release under the Mit Style License
+
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 
-//http://stackoverflow.com/questions/4810841/json-pretty-print-using-javascript
-// \/Date(1330848000000-0800)\/
-
-namespace JsonParser
+namespace JSON.SyntaxValidator
 {
     public class CommentInfo {
 
