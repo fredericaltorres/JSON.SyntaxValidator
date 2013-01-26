@@ -61,4 +61,5 @@ To support
 The relax mode can be activated in programmatically
 
 Sample:
+
     var o = (Hashtable) new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true);
