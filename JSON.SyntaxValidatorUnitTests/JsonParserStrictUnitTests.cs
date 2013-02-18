@@ -40,12 +40,12 @@ namespace JsonParserUnitTests
             Assert.AreEqual(true, o["Male"]);
             Assert.AreEqual(null, o["Other"]);
         }
-        private void HandleException(string json, string expectedErrorMessage, int expectedLine, int expectedColumn, bool supportStarComments = false)
+        public static void HandleException(string json, string expectedErrorMessage, int expectedLine, int expectedColumn, bool supportStarComments = false, bool relaxMode = false)
         {
             var exceptionCaugth = false;
             try
             {
-                var r = new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment: supportStarComments ) as Hashtable;
+                var r = new JSON.SyntaxValidator.Compiler().Validate(json, relaxMode:relaxMode, supportStartComment: supportStarComments ) as Hashtable;
             }
             catch (ParserException ex)
             {
@@ -352,6 +352,25 @@ namespace JsonParserUnitTests
             Assert.AreEqual(48.0, o["Age"]);
             Assert.AreEqual(true, o["Male"]);
             Assert.AreEqual(null, o["Other"]);
+        }
+        [TestMethod]
+        public void ParseSlashCommentAtTheEndOfFileInStrictMode()
+        {
+            string json = @"
+{ ""LastName"" : ""Smith"" }
+// this is a bad comment
+";
+            HandleException(json, JSON.SyntaxValidator.Compiler.SYNTAX_ERROR_018, 3, 0);  
+        }
+         [TestMethod]
+        public void ParseUnexpectedTrueAtTheEndOfFileInStrictMode()
+        {
+            string json = @"
+{ ""LastName"" : ""Smith"" }
+true
+";
+  
+            HandleException(json, JSON.SyntaxValidator.Compiler.SYNTAX_ERROR_014.format("true"), 2, 24);  
         }
     }
 }

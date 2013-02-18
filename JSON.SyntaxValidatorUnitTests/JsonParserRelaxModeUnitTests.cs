@@ -12,7 +12,7 @@ namespace JsonParserUnitTests
 {
     [TestClass]
     public class JsonParserRelaxModeUnitTests
-    {
+    {        
         [TestMethod]
         public void SlashBackSlash()
         {
@@ -30,6 +30,40 @@ namespace JsonParserUnitTests
             Assert.AreEqual("A", r["v1"]);
             Assert.AreEqual("\\A", r["v2"]);
         }
+        [TestMethod]
+        public void ParseJsonWithStarComment()
+        {
+            string json = @"/* A Coment */{ /* A Coment */""T""/* A Coment */:/* A Coment */true/* A Coment */, ""F"":false }";
+            var r = new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true) as Hashtable;
+            Assert.AreEqual(true, r["T"]);
+            Assert.AreEqual(false, r["F"]);
+        }
+        [TestMethod]
+        public void ParseJsonWithSlashSlahComment()
+        {
+            string json = @"
+// A Coment
+{ // A Coment 
+""T"" // A Coment
+: // A Coment 
+true // A Coment 
+, ""F"":false }";
+
+            var r = new JSON.SyntaxValidator.Compiler().Validate(json, supportStartComment:true, relaxMode:true) as Hashtable;
+            Assert.AreEqual(true, r["T"]);
+            Assert.AreEqual(false, r["F"]);
+        }
+        [TestMethod]
+        public void ParseJsonWithSlashSlahComment_InvalidComment()
+        {
+            string json = @"
+{
+// A Coment ""T"" 
+: true , ""F"":false }";
+            
+            JsonParserStrictUnitTests.HandleException(json, JSON.SyntaxValidator.Compiler.SYNTAX_ERROR_014.format(":"), 4, 1, true, true);   
+        }
+
         [TestMethod]
         public void ParseJsonWithNoQuoteForId()
         {
@@ -51,14 +85,12 @@ namespace JsonParserUnitTests
             Assert.AreEqual(48.0, o["Age"]);
             Assert.AreEqual(true, o["Male"]);
             Assert.AreEqual(null, o["Other"]);
-
             Assert.AreEqual("Torres", o["$_LastName"]);
             Assert.AreEqual("Frederic", o["$_FirstName"]);
             Assert.AreEqual(new DateTime(1964, 12, 11), o["$_BirthDate"]);
             Assert.AreEqual(48.0, o["$_Age"]);
             Assert.AreEqual(true, o["$_Male"]);
             Assert.AreEqual(null, o["$_Other"]);
-        }
-         
+        }         
     }
 }

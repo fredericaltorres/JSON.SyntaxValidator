@@ -33,6 +33,12 @@ namespace JSON.SyntaxValidator
     {
         public string Hash;
 
+        public bool IsRelax{
+            get{
+                 return (this.Count > 0 && this[0].Text.Contains(@"""use relax"""));
+            }
+        }
+
         internal void UpdateHash()
         {
             var b = new StringBuilder(1000);

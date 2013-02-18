@@ -48,7 +48,6 @@ namespace JsonParserUnitTests
             Assert.AreEqual(1, comments[2].Length);
             Assert.AreEqual("3", comments[2].Text);
         }
-
         [TestMethod]
         public void ParseThreeCommentWithSpaces()
         {
@@ -72,9 +71,6 @@ namespace JsonParserUnitTests
             Assert.AreEqual(3, comments[2].Length);
             Assert.AreEqual(" 3 ", comments[2].Text);
         }
-
-
-
         [TestMethod]
         public void ParseJsonWithALotOfComments()
         {
@@ -92,10 +88,8 @@ namespace JsonParserUnitTests
             Assert.AreEqual(" Re initialize the value each time the dialog is opened ", comments[6].Text);
 
             Assert.AreEqual(" Message to display after the action failed                   ", comments[18].Text);
-            Assert.AreEqual(" More info about the properties of the object ", comments[19].Text);
-        
+            Assert.AreEqual(" More info about the properties of the object ", comments[19].Text);   
         }
-
         [TestMethod]
         public void IsPositionInComment()
         {
@@ -123,10 +117,6 @@ namespace JsonParserUnitTests
             Assert.IsTrue(comments.IsPositionInComment(5));
             Assert.IsTrue(comments.IsPositionInComment(6));
             Assert.IsTrue(comments.IsPositionInComment(7));
-
         }
-
-       
-
     }
 }

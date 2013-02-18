@@ -36,8 +36,12 @@ namespace JSON.SyntaxValidator
           { TOKENS.ID           , "Id"   },
         };
 
+        // UTC Time
         private static System.Text.RegularExpressions.Regex _JsonDateRegEx1 = new System.Text.RegularExpressions.Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // UTC time with milli second
         private static System.Text.RegularExpressions.Regex _JsonDateRegEx2 = new System.Text.RegularExpressions.Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{1,3}Z", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // Local time
+        private static System.Text.RegularExpressions.Regex _JsonDateRegEx3 = new System.Text.RegularExpressions.Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         public static bool IsJsonDate(string v)
         {
@@ -45,7 +49,7 @@ namespace JSON.SyntaxValidator
                 v = v.Substring(1);
             if (v.EndsWith("\""))
                 v = v.Substring(0, v.Length - 1);
-            return _JsonDateRegEx1.IsMatch(v) || _JsonDateRegEx2.IsMatch(v);
+            return _JsonDateRegEx1.IsMatch(v) || _JsonDateRegEx2.IsMatch(v) || _JsonDateRegEx3.IsMatch(v);
         }
 
         protected static int ValidateIntOrThrowError(string v, string errorMessage)
@@ -55,23 +59,54 @@ namespace JSON.SyntaxValidator
                 return i;
             throw new ArgumentException(String.Format(errorMessage, v));
         }
- 
+        /// <summary>
+        /// http://en.wikipedia.org/wiki/ISO_8601
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         protected static DateTime ParseJsonDateTime(string s)
         {
             // Torres Frederic
             // Added Support for  new Date("2012-09-17T22:33:03Z");
+            // Z mean UTC date
             if (s.Contains("T") && s.EndsWith("Z"))
             {
-                var parts = s.Split('T');
-                var dateParts = parts[0].Split('-');
-                var timeParts = parts[1].Replace("Z", "").Split(':');
-                var year = ValidateIntOrThrowError(dateParts[0], "Invalid Date (year):" + s);
-                var mon = ValidateIntOrThrowError(dateParts[1], "Invalid Date (month):" + s);
-                var mday = ValidateIntOrThrowError(dateParts[2], "Invalid Date (day):" + s);
-                var hour = ValidateIntOrThrowError(timeParts[0], "Invalid Date (hour)" + s);
-                var min = ValidateIntOrThrowError(timeParts[1], "Invalid Date (minute)" + s);
-                int milli = 0;
-                int sec = 0;
+                var parts       = s.Split('T');
+                var dateParts   = parts[0].Split('-');
+                var timeParts   = parts[1].Replace("Z", "").Split(':');
+                var year        = ValidateIntOrThrowError(dateParts[0], "Invalid Date (year):" + s);
+                var mon         = ValidateIntOrThrowError(dateParts[1], "Invalid Date (month):" + s);
+                var mday        = ValidateIntOrThrowError(dateParts[2], "Invalid Date (day):" + s);
+                var hour        = ValidateIntOrThrowError(timeParts[0], "Invalid Date (hour)" + s);
+                var min         = ValidateIntOrThrowError(timeParts[1], "Invalid Date (minute)" + s);
+                int milli       = 0;
+                int sec         = 0;
+                if (timeParts[2].Contains("."))
+                {
+                    var SecMillParts = timeParts[2].Split('.');
+                    sec              = ValidateIntOrThrowError(SecMillParts[0], "Invalid Date (second)" + s);
+                    milli            = ValidateIntOrThrowError(SecMillParts[1], "Invalid Date (milli-second)" + s);
+                }
+                else
+                {
+                    sec = ValidateIntOrThrowError(timeParts[2], "Invalid Date (second)" + s);
+                }
+                DateTime d = new DateTime(year, mon, mday, hour, min, sec, 000, DateTimeKind.Utc);
+                
+                return d;
+            }
+            else if (s.Contains("T") && (!s.EndsWith("Z"))) // This is a local time date
+            {
+                var parts       = s.Split('T');
+                var dateParts   = parts[0].Split('-');
+                var timeParts   = parts[1].Replace("Z", "").Split(':');
+                var year        = ValidateIntOrThrowError(dateParts[0], "Invalid Date (year):" + s);
+                var mon         = ValidateIntOrThrowError(dateParts[1], "Invalid Date (month):" + s);
+                var mday        = ValidateIntOrThrowError(dateParts[2], "Invalid Date (day):" + s);
+                var hour        = ValidateIntOrThrowError(timeParts[0], "Invalid Date (hour)" + s);
+                var min         = ValidateIntOrThrowError(timeParts[1], "Invalid Date (minute)" + s);
+                int milli       = 0;
+                int sec         = 0;
                 if (timeParts[2].Contains("."))
                 {
                     var SecMillParts = timeParts[2].Split('.');
@@ -82,7 +117,7 @@ namespace JSON.SyntaxValidator
                 {
                     sec = ValidateIntOrThrowError(timeParts[2], "Invalid Date (second)" + s);
                 }
-                DateTime d = new DateTime(year, mon, mday, hour, min, sec, 000);
+                DateTime d = new DateTime(year, mon, mday, hour, min, sec, 000, DateTimeKind.Local);
                 return d;
             }
             else
@@ -101,9 +136,9 @@ namespace JSON.SyntaxValidator
                    (c == '_') || (c == '$');
         }
 
-        protected static string ParseID(char[] json, ref int index, ref bool success, bool supportStartComment)
+        protected static string ParseID(char[] json, ref int index, ref bool success, bool supportStarsComment, bool supportSlashComment)
         {
-            EatWhitespace(json, ref index, supportStartComment);
+            EatWhitespace(json, ref index, supportStarsComment, supportSlashComment);
             var b = new StringBuilder(100);
 
             if (!IsIdForFirstChar(json[index]))
@@ -120,9 +155,9 @@ namespace JSON.SyntaxValidator
             return b.ToString();
         }
 
-        protected static double ParseNumber(char[] json, ref int index, ref bool success, bool supportStartComment)
+        protected static double ParseNumber(char[] json, ref int index, ref bool success, bool supportStarsComment , bool supportSlashComment)
         {
-            EatWhitespace(json, ref index, supportStartComment);
+            EatWhitespace(json, ref index, supportStarsComment, supportSlashComment);
 
             int lastIndex = GetLastIndexOfNumber(json, index);
             int charLength = (lastIndex - index) + 1;
@@ -148,51 +183,113 @@ namespace JSON.SyntaxValidator
             return lastIndex - 1;
         }
 
-        protected static void EatWhitespace(char[] json, ref int index, bool supportStartComment)
+        protected static void EatWhitespace(char[] json, ref int index, bool supportStarsComment, bool supportSlashComment)
         {
             for (; index < json.Length; index++)
             {
                 if (" \t\n\r".IndexOf(json[index]) == -1)
                 {
-                    if(supportStartComment)
-                        EatComment(json, ref index);
+                    if(supportStarsComment)
+                        EatComment(json, ref index, supportStarsComment, supportSlashComment);
                     break;
                 }
             }
         }
 
-        protected static void EatComment(char[] json, ref int index)
+        
+        protected static int GetLine(char [] charArray,int index)
         {
+            int lineCounter = 0;
+            for (int i = 0; i < index; i++)
+            {
+                if (charArray[i] == '\n')
+                    lineCounter++;
+            }
+            return lineCounter + 1;
+        }
+
+        protected static int GetColumn(char [] charArray, int index)
+        {
+            int i = index;
+            if (i >= charArray.Length)
+            {
+                i = charArray.Length - 1;
+            }
+            while (i >= 0 && charArray[i] != '\n')
+            {
+                i--;
+            }
+            if (i == -1)
+            {
+                i = 0;
+            }
+            else
+            {
+                i++;
+            }
+            var col = index - i;
+            return col;
+        }
+
+
+        private static bool IsCrOrLf(char c)
+        {
+            return c == '\r' || c == '\n';
+        }
+
+        protected static void EatComment(char[] json, ref int index, bool supportStarsComment, bool supportSlashComment)
+        { 
             if (index < json.Length - 1)
             {
-                if (json[index] == '/' && json[index + 1] == '*')
-                {
-                    while (index < json.Length && (!(json[index] == '*' && json[index + 1] == '/')))
+                if(supportStarsComment) {
+                    if (index < json.Length-1 && json[index] == '/' && json[index + 1] == '*')
                     {
-                        index++;
+                        while (index < json.Length && (!(json[index] == '*' && json[index + 1] == '/')))
+                        {
+                            index++;
+                        }
+                        index += 2;
+                        EatWhitespace(json, ref index, supportStarsComment, supportSlashComment);
                     }
-                    index += 2;
-                    EatWhitespace(json, ref index, true);
+                }
+                if(supportSlashComment) 
+                {
+                    if (index < json.Length-1 && json[index] == '/' && json[index + 1] == '/')
+                    {
+                        while (index < json.Length && (!IsCrOrLf(json[index])))
+                        {
+                            index++;
+                        }
+                        index += 2;
+                        EatWhitespace(json, ref index, supportStarsComment, supportSlashComment);
+                    }
+                }
+                else 
+                {
+                    if (index < json.Length-1 && json[index] == '/' && json[index + 1] == '/')
+                    {
+                        throw new JSON.SyntaxValidator.ParserException(JSON.SyntaxValidator.Compiler.SYNTAX_ERROR_019, GetLine(json, index), GetColumn(json, index), index);
+                    }
                 }
             }
         }
 
-        protected static bool LookAheadForId(char[] json, int index, bool _supportStartComments)
+        protected static bool LookAheadForId(char[] json, int index, bool supportStarsComments , bool supportSlashComment)
         {
             int saveIndex = index;
             bool success = false;
-            return ParseID(json, ref saveIndex, ref success, _supportStartComments) != null;
+            return ParseID(json, ref saveIndex, ref success, supportStarsComments, supportSlashComment) != null;
         }
 
-        protected static TOKENS LookAhead(char[] json, int index, bool supportStartComment)
+        protected static TOKENS LookAhead(char[] json, int index, bool supportStarsComment , bool supportSlashComment)
         {
             int saveIndex = index;
-            return NextToken(json, ref saveIndex, supportStartComment);
+            return NextToken(json, ref saveIndex, supportStarsComment, supportSlashComment);
         }
 
-        protected static TOKENS NextToken(char[] json, ref int index, bool supportStartComment)
+        protected static TOKENS NextToken(char[] json, ref int index, bool supportStarsComment , bool supportSlashComment)
         {
-            EatWhitespace(json, ref index, supportStartComment);
+            EatWhitespace(json, ref index, supportStarsComment, supportSlashComment);
 
             if (index == json.Length)
             {
@@ -263,7 +360,7 @@ namespace JSON.SyntaxValidator
                     return TOKENS.NULL;
                 }
             }
-            if (LookAheadForId(json, index, supportStartComment))
+            if (LookAheadForId(json, index, supportStarsComment, supportSlashComment))
             {
                 return TOKENS.ID;
             }
