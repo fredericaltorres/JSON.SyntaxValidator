@@ -30,9 +30,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>JSON.SyntaxValidator.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="DynamicSugar">
-      <HintPath>Ref\DynamicSugar.dll</HintPath>
+      <HintPath>..\..\..\ref\DynamicSugar.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -44,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommentParser.cs" />
+    <Compile Include="MD5Hash.cs" />
     <Compile Include="JSON.SyntaxValidator.TOKEN.cs" />
     <Compile Include="JSON.SyntaxValidator.ParserException.cs" />
     <Compile Include="JSON.SyntaxValidator.Tokenizer.cs" />
@@ -52,6 +59,7 @@
     <Compile Include="Properties\Version.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="JSON.SyntaxValidator.snk" />
     <None Include="readme.markdown" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -17,15 +17,23 @@ namespace JsonParserUnitTests
         [TestMethod]
         public void IsJsonDate()
         {
+            // UTC Date
             Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00Z"));
             Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.1Z"));
             Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.12Z"));
             Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.123Z"));
 
-            Assert.IsFalse(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.11"));
+            // Local Date
+            Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00"));
+            Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.123"));
+            Assert.IsTrue(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.123-04:00"));
+            
             Assert.IsFalse(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11 00:00:00.11Z"));
             Assert.IsFalse(JSON.SyntaxValidator.Tokenizer.IsJsonDate("964-12-11T00:00:00.11Z"));
             Assert.IsFalse(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00-00:00.123Z"));
+
+            Assert.IsFalse(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.123-04"));
+            Assert.IsFalse(JSON.SyntaxValidator.Tokenizer.IsJsonDate("1964-12-11T00:00:00.123-04~00"));
         }                
         [TestMethod]
         public void ParseSimpleJsonFile()

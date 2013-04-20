@@ -14,6 +14,7 @@ using System.Globalization;
 using System.Text;
 using DynamicSugar;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace JSON.SyntaxValidator
 {
@@ -36,12 +37,11 @@ namespace JSON.SyntaxValidator
           { TOKENS.ID           , "Id"   },
         };
 
-        // UTC Time
-        private static System.Text.RegularExpressions.Regex _JsonDateRegEx1 = new System.Text.RegularExpressions.Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", System.Text.RegularExpressions.RegexOptions.Compiled);
-        // UTC time with milli second
-        private static System.Text.RegularExpressions.Regex _JsonDateRegEx2 = new System.Text.RegularExpressions.Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{1,3}Z", System.Text.RegularExpressions.RegexOptions.Compiled);
-        // Local time
-        private static System.Text.RegularExpressions.Regex _JsonDateRegEx3 = new System.Text.RegularExpressions.Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static Regex _JsonDateRegEx_UTCTimeNoMilliSecond                 = new Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static Regex _JsonDateRegEx_UTCTimeWithMilliSecond               = new Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{1,3}Z", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static Regex _JsonDateRegEx_LocalTimeNoMilliSecondNoTimeZone     = new Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static Regex _JsonDateRegEx_LocalTimeWithMilliSecondNoTimeZone   = new Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{1,3}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static Regex _JsonDateRegEx_LocalTimeWithMilliSecondWithTimeZone = new Regex(@"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{1,3}-\d\d:\d\d$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         public static bool IsJsonDate(string v)
         {
@@ -49,7 +49,17 @@ namespace JSON.SyntaxValidator
                 v = v.Substring(1);
             if (v.EndsWith("\""))
                 v = v.Substring(0, v.Length - 1);
-            return _JsonDateRegEx1.IsMatch(v) || _JsonDateRegEx2.IsMatch(v) || _JsonDateRegEx3.IsMatch(v);
+            if(_JsonDateRegEx_UTCTimeNoMilliSecond.IsMatch(v)) 
+                return true;
+            if(_JsonDateRegEx_UTCTimeWithMilliSecond.IsMatch(v))
+                return true;
+            if(_JsonDateRegEx_LocalTimeNoMilliSecondNoTimeZone.IsMatch(v))
+                return true;
+            if(_JsonDateRegEx_LocalTimeWithMilliSecondNoTimeZone.IsMatch(v))
+                return true;
+            if(_JsonDateRegEx_LocalTimeWithMilliSecondWithTimeZone.IsMatch(v))
+                return true;
+            return false;
         }
 
         protected static int ValidateIntOrThrowError(string v, string errorMessage)
@@ -68,7 +78,7 @@ namespace JSON.SyntaxValidator
         {
             // Torres Frederic
             // Added Support for  new Date("2012-09-17T22:33:03Z");
-            // Z mean UTC date
+            // Z mean UTC date according NODEJS
             if (s.Contains("T") && s.EndsWith("Z"))
             {
                 var parts       = s.Split('T');
@@ -91,33 +101,50 @@ namespace JSON.SyntaxValidator
                 {
                     sec = ValidateIntOrThrowError(timeParts[2], "Invalid Date (second)" + s);
                 }
-                DateTime d = new DateTime(year, mon, mday, hour, min, sec, 000, DateTimeKind.Utc);
-                
+                DateTime d = new DateTime(year, mon, mday, hour, min, sec, milli, DateTimeKind.Utc);
                 return d;
             }
-            else if (s.Contains("T") && (!s.EndsWith("Z"))) // This is a local time date
+            else if (s.Contains("T") && (!s.EndsWith("Z")))
             {
-                var parts       = s.Split('T');
-                var dateParts   = parts[0].Split('-');
-                var timeParts   = parts[1].Replace("Z", "").Split(':');
-                var year        = ValidateIntOrThrowError(dateParts[0], "Invalid Date (year):" + s);
-                var mon         = ValidateIntOrThrowError(dateParts[1], "Invalid Date (month):" + s);
-                var mday        = ValidateIntOrThrowError(dateParts[2], "Invalid Date (day):" + s);
-                var hour        = ValidateIntOrThrowError(timeParts[0], "Invalid Date (hour)" + s);
-                var min         = ValidateIntOrThrowError(timeParts[1], "Invalid Date (minute)" + s);
-                int milli       = 0;
-                int sec         = 0;
-                if (timeParts[2].Contains("."))
+                // It is local time with possible a timezone defintion
+                // "2013-04-20T11:59:48.5820883-04:00"
+                var parts           = s.Split('T');
+                var dateParts       = parts[0].Split('-');
+                var timeParts       = parts[1].Replace("Z", "").Split(':');
+                var year            = ValidateIntOrThrowError(dateParts[0], "Invalid Date (year):" + s);
+                var mon             = ValidateIntOrThrowError(dateParts[1], "Invalid Date (month):" + s);
+                var mday            = ValidateIntOrThrowError(dateParts[2], "Invalid Date (day):" + s);
+                var hour            = ValidateIntOrThrowError(timeParts[0], "Invalid Date (hour)" + s);
+                var min             = ValidateIntOrThrowError(timeParts[1], "Invalid Date (minute)" + s);
+                
+                // Analyse Second.millisecond-TimeZone
+                var secondsString   = timeParts[2];
+                int milli           = 0;
+                int sec             = 0;
+                int timeZoneHours   = 0;
+                int timeZoneMinutes = 0;
+
+                if (secondsString.Contains("."))
                 {
-                    var SecMillParts = timeParts[2].Split('.');
-                    sec = ValidateIntOrThrowError(SecMillParts[0], "Invalid Date (second)" + s);
-                    milli = ValidateIntOrThrowError(SecMillParts[1], "Invalid Date (milli-second)" + s);
+                    var secMillParts = secondsString.Split('.');
+                    sec              = ValidateIntOrThrowError(secMillParts[0], "Invalid Date (second)" + s);
+                    var milliSeconds = secMillParts[1];
+                    if(milliSeconds.Contains("-")) { // We are having a time zone
+                        var milliParts      = milliSeconds.Split('-');
+                        milli               = ValidateIntOrThrowError(milliParts[0], "Invalid Date (milli second)" + s);
+                        var timeZoneParts   = milliParts[1].Split(':');
+                        timeZoneHours       = ValidateIntOrThrowError(timeZoneParts[0], "Invalid Date (milli second)" + s);
+                        timeZoneMinutes     = ValidateIntOrThrowError(timeZoneParts[1], "Invalid Date (milli second)" + s);
+                    }
+                    else {
+                        milli = ValidateIntOrThrowError(milliSeconds, "Invalid Date (milli-second)" + s);
+                    }
                 }
                 else
                 {
-                    sec = ValidateIntOrThrowError(timeParts[2], "Invalid Date (second)" + s);
+                    sec = ValidateIntOrThrowError(secondsString, "Invalid Date (second)" + s);
                 }
-                DateTime d = new DateTime(year, mon, mday, hour, min, sec, 000, DateTimeKind.Local);
+                var d = new DateTime(year, mon, mday, hour, min, sec, milli, DateTimeKind.Local);
                 return d;
             }
             else
